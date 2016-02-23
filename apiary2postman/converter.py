@@ -51,13 +51,65 @@ def _buildFullResponse(apiary):
 
 	return result
 
-def write(json_data, out=stdout, only_collection=False, pretty=False):
+def _oneCollection(res, name):
+	# One top-level collection
+	# Each previously top-level collection becomes a folder
+	# The folders can be discarded, after linking their requests into the new folder
+	one = dict()
+	coll = []
+	for key in res.iterkeys():
+		if key == 'collections':
+			one[key] = [_reorgCollections(res[key], name)]
+		else:
+			one[key] = res[key]
+	return one
+
+def _folderFromCollection(c):
+	return {
+			'name': c['name'],
+			'id': str(uuid4()),
+			'description': c['description'],
+			'order': [],
+			'collection_id': c['id'],
+			'collection_name': c['name'],
+	}
+
+def _reorgCollections(colls, name):
+	top = {
+		'name': name,
+		'id': str(uuid4()),
+		'folders': [],
+		'requests': [],
+		'description': '',
+		'timestamp': 0,
+		'remote_id': 0,
+		'order': [],
+		'synced': False,
+	}
+	for c in colls:
+		f = _folderFromCollection(c)
+		f['collection_id'] = top['id']
+		f['collection_name'] = top['name']
+		top['folders'].append(f)
+		top['order'].append(f['id'])
+		for r in c['requests']:
+			# add requests to folder where r['collection_id'] == c['id']
+			r['collectionId'] = top['id']
+			r['folder'] = f['id']
+			f['order'].append(r['id'])
+			top['requests'].append(r)
+	return top
+
+def write(json_data, one_collection=one_collection, out=stdout, only_collection=False, pretty=False):
 	json_obj = json.loads(json_data)
 
 	if only_collection:
 		result_out = _buildCollectionResponse(json_obj)
 	else:
 		result_out = _buildFullResponse(json_obj)
+	
+	if one_collection != '':
+		result_out = _oneCollection(result_out, one_collection)
 
 	if pretty:
 		json.dump(result_out, out, indent=2, separators=(',', ': '))

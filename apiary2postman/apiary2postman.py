@@ -77,6 +77,8 @@ def main():
                         help='the name of the api on apiary. I.e. testapi311 for http://docs.testapi311.apiary.io/') 
     parser_json.add_argument('input', metavar='input', type=file, nargs='?', default=stdin,
                         help='input file, formatted as JSON. If not supplied, stdin is used.') 
+    parser.add_argument('--one_collection', dest='one_collection',
+                        help='output a single top-level collection')
     parser_blueprint.add_argument('blueprint_input', metavar='input', type=file, nargs='?', default=stdin,
                         help='input file, formatted as Blueprint API Markup. If not supplied, stdin is used.') 
     parser.add_argument('--output', metavar='output', type=argparse.FileType('w'), nargs=1, default=stdout,
@@ -108,12 +110,14 @@ def main():
 
         blueprint = fetch_blueprint(args.name[0], apikey)
         input = blueprint2json(blueprint)
+
         
     output = args.output    
     if args.output != stdout:
         output = output[0]
 
-    write(input, output, args.only_collection, args.pretty)
+    write(input, only_collection=args.only_collection, out=output, pretty=args.pretty,
+        one_collection=args.one_collection)
 
 if  __name__ =='__main__':
     main()
