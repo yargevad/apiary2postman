@@ -57,10 +57,14 @@ def filter_collections(obj, exclude):
 	for key in obj.iterkeys():
 		if key == 'collections':
 			for coll in obj[key]:
+				append = True
 				for ex in exclude:
-					if ex not in coll['name'].lower():
-						new.append(coll)
+					if ex in coll['name'].lower():
+						append = False
+				if append:
+					new.append(coll)
 			obj[key] = new
+			break
 
 def combine_collections(obj, name):
 	# One top-level collection
