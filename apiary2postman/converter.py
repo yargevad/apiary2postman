@@ -1,21 +1,21 @@
 import json
-from sys import stdout
+from sys import stdout, stderr
 from uuid import uuid4
 from time import time
 
-def _buildCollectionResponse(apiary):
-	environment = createEnvironment(apiary)
+def first_collection(json_obj):
+	environment = createEnvironment(json_obj)
 
 	# Create the collection
 	collections = parseResourceGroups(
-		apiary['resourceGroups'], 
+		json_obj['resourceGroups'], 
 		environment['values'], 
 		True)
 
 	result = {
 		'id' : str(uuid4()),
-		'name' : apiary['name'],
-		'description' : apiary['description'],
+		'name' : json_obj['name'],
+		'description' : json_obj['description'],
 	  'timestamp' : int(time()),
 	  'remote_id' : 0,
 	  'synced' : False,
@@ -31,9 +31,9 @@ def _buildCollectionResponse(apiary):
 
 	return result
 
-def _buildFullResponse(apiary):
+def full_response(json_obj):
 	# Create the Environment
-	environment = createEnvironment(apiary)
+	environment = createEnvironment(json_obj)
 
 	# Create the Header
 	result = {
@@ -45,24 +45,30 @@ def _buildFullResponse(apiary):
 
 	# Create the collection
 	result['collections'] = parseResourceGroups(
-		apiary['resourceGroups'], 
+		json_obj['resourceGroups'], 
 		result['environments'][0]['values'], 
 		False)
 
 	return result
 
-def _oneCollection(res, name):
+def filter_collections(obj, exclude):
+	new = []
+	exclude = [x.lower() for x in exclude]
+	for key in obj.iterkeys():
+		if key == 'collections':
+			for coll in obj[key]:
+				for ex in exclude:
+					if ex not in coll['name'].lower():
+						new.append(coll)
+			obj[key] = new
+
+def combine_collections(obj, name):
 	# One top-level collection
 	# Each previously top-level collection becomes a folder
-	# The folders can be discarded, after linking their requests into the new folder
-	one = dict()
-	coll = []
-	for key in res.iterkeys():
+	# The folders are discarded, after linking their requests into the new folder
+	for key in obj.iterkeys():
 		if key == 'collections':
-			one[key] = [_reorgCollections(res[key], name)]
-		else:
-			one[key] = res[key]
-	return one
+			obj[key] = [_reorgCollections(obj[key], name)]
 
 def _folderFromCollection(c):
 	return {
@@ -100,21 +106,11 @@ def _reorgCollections(colls, name):
 			top['requests'].append(r)
 	return top
 
-def write(json_data, one_collection=one_collection, out=stdout, only_collection=False, pretty=False):
-	json_obj = json.loads(json_data)
-
-	if only_collection:
-		result_out = _buildCollectionResponse(json_obj)
-	else:
-		result_out = _buildFullResponse(json_obj)
-	
-	if one_collection != '':
-		result_out = _oneCollection(result_out, one_collection)
-
+def write(json_data, out=stdout, pretty=False):
 	if pretty:
-		json.dump(result_out, out, indent=2, separators=(',', ': '))
+		json.dump(json_data, out, indent=2, separators=(',', ': '))
 	else:
-		json.dump(result_out, out)
+		json.dump(json_data, out)
 
 
 def createEnvironment(json_obj):

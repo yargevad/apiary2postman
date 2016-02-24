@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 from sys import stdin, stderr, stdout, argv, exit
 import argparse
+import json
 import subprocess
 import os
 import platform
-from converter import write
+import converter
 from blueprint import blueprint2json,fetch_blueprint
 
 class bcolors:
@@ -77,8 +78,10 @@ def main():
                         help='the name of the api on apiary. I.e. testapi311 for http://docs.testapi311.apiary.io/') 
     parser_json.add_argument('input', metavar='input', type=file, nargs='?', default=stdin,
                         help='input file, formatted as JSON. If not supplied, stdin is used.') 
-    parser.add_argument('--one_collection', dest='one_collection',
-                        help='output a single top-level collection')
+    parser.add_argument('--combine', dest='combine',
+                        help='combine all collections into a a single top-level collection')
+    parser.add_argument('--exclude', dest='exclude', nargs='+',
+                        help='exclude collections containing the provided (case-insensitive) substrings')
     parser_blueprint.add_argument('blueprint_input', metavar='input', type=file, nargs='?', default=stdin,
                         help='input file, formatted as Blueprint API Markup. If not supplied, stdin is used.') 
     parser.add_argument('--output', metavar='output', type=argparse.FileType('w'), nargs=1, default=stdout,
@@ -116,8 +119,26 @@ def main():
     if args.output != stdout:
         output = output[0]
 
-    write(input, only_collection=args.only_collection, out=output, pretty=args.pretty,
-        one_collection=args.one_collection)
+    # unmarshal from json string
+    json_obj = json.loads(input)
+
+    # exclude collections by name
+    if len(args.exclude) > 0:
+      converter.filter_collections(json_obj, args.exclude)
+
+    # combine all collections into a top-level one, removing existing folders
+    if args.combine != '':
+      converter.combine_collections(json_obj, args.combine)
+
+    if args.only_collection:
+      # return only the first collection
+      json_obj = converter.first_collection(json_obj)
+    else:
+      # otherwise, ship it
+      json_obj = converter.full_response(json_obj)
+
+    # write json object out to configured destination, perhaps with whitespace
+    converter.write(json_obj, out=output, pretty=args.pretty)
 
 if  __name__ =='__main__':
     main()
