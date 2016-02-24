@@ -122,6 +122,12 @@ def main():
     # unmarshal from json string
     json_obj = json.loads(input)
 
+    if args.only_collection:
+      # return only the first collection
+      json_obj = converter.first_collection(json_obj)
+    else:
+      json_obj = converter.full_response(json_obj)
+
     # exclude collections by name
     if len(args.exclude) > 0:
       converter.filter_collections(json_obj, args.exclude)
@@ -129,13 +135,6 @@ def main():
     # combine all collections into a top-level one, removing existing folders
     if args.combine != '':
       converter.combine_collections(json_obj, args.combine)
-
-    if args.only_collection:
-      # return only the first collection
-      json_obj = converter.first_collection(json_obj)
-    else:
-      # otherwise, ship it
-      json_obj = converter.full_response(json_obj)
 
     # write json object out to configured destination, perhaps with whitespace
     converter.write(json_obj, out=output, pretty=args.pretty)
