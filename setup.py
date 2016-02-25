@@ -10,6 +10,7 @@ setup(
   download_url = 'https://github.com/thecopy/apiary2postman/tarball/0.4.8', 
   keywords = ['apiary', 'blueman', 'postman'], # arbitrary keywords
   classifiers = [],
+  install_requires = ['urimagic'],
   entry_points={
         'console_scripts': [
             'apiary2postman = apiary2postman.apiary2postman:main',
