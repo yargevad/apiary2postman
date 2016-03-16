@@ -57,6 +57,14 @@ Feel free to submit a pull request which fixes this.
  
     apiary2postman api my_api > my_api.dump
 
+##### To ignore certain Apiary API resource groups, use `--exclude` (case-insensitive substring match):
+
+    apiary2postman --exclude 'IGNORE ME' --exclude 'ME TOO' api my_api > my_api.dump
+
+##### By default, `apiary2postman` creates one collection per resource group. `--one-collection` allows you to specify the name of a container collection. Folders are created w/in this collection using the resource group names, and requests are added to the folders. Caveat: resources - that would otherwise determine the folder names - are ignored.
+
+    apiary2postman --combine 'My Combined API' api my_api > my_api.dump
+
 ##### If you don't have an API key, log in to [your Apiary account](https://apiary.io), go to Settings, scroll down to Tokens. Generate one if needed, and set the environment variable `APIARY_API_KEY` to that hex string.
 
     APIARY_API_KEY=ffffffffffffffffffffffffffffffff apiary2postman api my_api > my_api.dump
