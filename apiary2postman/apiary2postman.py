@@ -129,7 +129,7 @@ def main():
       json_obj = converter.full_response(json_obj)
 
     # exclude collections by name
-    if len(args.exclude) > 0:
+    if args.exclude != None and len(args.exclude) > 0:
       converter.filter_collections(json_obj, args.exclude)
 
     # combine all collections into a top-level one, removing existing folders
